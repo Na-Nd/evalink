@@ -1,0 +1,45 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: auth-service
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        starttls:
+          enable: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  datasource:
+    url: ${POSTGRES_URL}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    jpa:
+      properties:
+        hibernate:
+          dialect: org.hibernate.dialect.PostgreSQLDialect
+      hibernate:
+        ddl-auto: update
+
+jwt:
+  user:
+    secret: ${USER_JWT_SECRET}
+    access:
+      expiration: ${USER_ACCESS_JWT_EXPIRATION}
+    refresh:
+      expiration: ${USER_REFRESH_JWT_EXPIRATION}
+  service:
+    secret: ${SERVICE_JWT_SECRET}
+    expiration: ${SERVICE_JWT_EXPIRATION}
+
+account-service:
+  url: ${ACCOUNT_SERVICE_URL}
+

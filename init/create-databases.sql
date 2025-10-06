@@ -1,0 +1,9 @@
+CREATE DATABASE auth_service_db;
+CREATE DATABASE posts_service_db;
+CREATE DATABASE group_posts_service_db;
+CREATE DATABASE notifications_service_db;
+CREATE DATABASE feed_service_db;
+CREATE DATABASE group_chats_service_db;
+CREATE DATABASE chats_service_db;
+CREATE DATABASE account_service_db;
+CREATE DATABASE friends_service;
