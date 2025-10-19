@@ -14,7 +14,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import ru.nand.authservice.entity.ENUMS.ROLE;
 import ru.nand.authservice.entity.User;
 import ru.nand.authservice.entity.UserDetailsImpl;
-import ru.nand.authservice.service.SessionServiceImpl;
+import ru.nand.authservice.service.SessionService;
+import ru.nand.authservice.service.UserService;
 import ru.nand.authservice.util.UserJwtUtil;
 
 import java.io.IOException;
@@ -24,10 +25,10 @@ import java.io.IOException;
 public class JwtRequestFilter extends OncePerRequestFilter {
 
     private final UserJwtUtil userJwtUtil;
-    private final SessionServiceImpl sessionService;
+    private final SessionService sessionService;
 
     @Autowired
-    public JwtRequestFilter(UserJwtUtil userJwtUtil, SessionServiceImpl sessionService) {
+    public JwtRequestFilter(UserJwtUtil userJwtUtil, SessionService sessionService) {
         this.userJwtUtil = userJwtUtil;
         this.sessionService = sessionService;
     }
@@ -47,7 +48,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                     return;
                 }
 
-                // Если токен валиден и сессия текущего пользователя активна (так как проверяем по токену, заодно проверяем существует ли такая сессия с таким токеном вообще)
+                // Если токен валиден и сессия текущего пользователя активна (так как проверяем по токену, заодно проверяем существует ли такая сессия с таким токеном вообще). Заодно проверяется заблокирован пользовател или нет (иначе сессия будет заблокирована)
                 if(userJwtUtil.validateUserToken(token) && sessionService.isSessionActive(token)){
                     String username = userJwtUtil.extractUsername(token);
                     String role = userJwtUtil.extractRole(token);
