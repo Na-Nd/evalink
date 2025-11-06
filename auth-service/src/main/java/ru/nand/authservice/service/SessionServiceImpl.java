@@ -61,7 +61,7 @@ public class SessionServiceImpl implements SessionService {
             }
         }
 
-        // Генерируем токены, чтобы вернуть их, в в БД будет хэш
+        // Генерируем токены, чтобы вернуть их, а в БД будет хэш
         String accessToken = userJwtUtil.generateAccessToken(user);
         String refreshToken = userJwtUtil.generateRefreshToken(user);
 

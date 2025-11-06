@@ -1,5 +1,6 @@
-package ru.nand.authservice.entity.dto;
+package ru.nand.notificationservice.entity.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
@@ -7,6 +8,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
+@AllArgsConstructor
 @Builder
 public class NotificationDTO {
     private UUID notificationId;

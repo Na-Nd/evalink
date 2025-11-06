@@ -1,4 +1,4 @@
-package ru.nand.authservice.config.security;
+package ru.nand.notificationservice.config.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -11,11 +11,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import ru.nand.authservice.entity.ENUMS.ROLE;
-import ru.nand.authservice.entity.User;
-import ru.nand.authservice.entity.UserDetailsImpl;
-import ru.nand.authservice.service.SessionService;
-import ru.nand.authservice.util.UserJwtUtil;
+import ru.nand.notificationservice.entity.User;
+import ru.nand.notificationservice.entity.UserDetailsImpl;
+import ru.nand.notificationservice.util.UserJwtUtil;
 
 import java.io.IOException;
 
@@ -24,18 +22,16 @@ import java.io.IOException;
 public class JwtRequestFilter extends OncePerRequestFilter {
 
     private final UserJwtUtil userJwtUtil;
-    private final SessionService sessionService;
 
     @Autowired
-    public JwtRequestFilter(UserJwtUtil userJwtUtil, SessionService sessionService) {
+    public JwtRequestFilter(UserJwtUtil userJwtUtil) {
         this.userJwtUtil = userJwtUtil;
-        this.sessionService = sessionService;
     }
 
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String token = userJwtUtil.resolveUserToken(request);
+        String token = userJwtUtil.resolveUserTokenFromRequest(request);
 
         try{
             if (token != null) {
@@ -47,14 +43,14 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                     return;
                 }
 
-                // Если токен валиден и сессия текущего пользователя активна (так как проверяем по токену, заодно проверяем существует ли такая сессия с таким токеном вообще). Заодно проверяется заблокирован пользователь или нет (иначе сессия будет заблокирована)
-                if(userJwtUtil.validateUserToken(token) && sessionService.isSessionActive(token)){
+                // Если токен валиден
+                if(userJwtUtil.validateUserToken(token)){
                     String username = userJwtUtil.extractUsername(token);
                     String role = userJwtUtil.extractRole(token);
 
                     if(username != null && SecurityContextHolder.getContext().getAuthentication() == null){
                         UserDetails userDetails = new UserDetailsImpl(
-                                new User(username, ROLE.valueOf(role))
+                                new User(username)
                         );
                         log.debug("Пользователь в сессии: {}", userDetails.getUsername());
 

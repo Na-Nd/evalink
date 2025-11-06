@@ -1,4 +1,4 @@
-package ru.nand.authservice.config;
+package ru.nand.notificationservice.config;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -34,4 +34,5 @@ public class KafkaConsumerConfig {
         factory.setConsumerFactory(consumerFactory());
         return factory;
     }
+
 }

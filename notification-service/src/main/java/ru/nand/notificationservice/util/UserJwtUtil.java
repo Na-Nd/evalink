@@ -1,4 +1,4 @@
-package ru.nand.authservice.util;
+package ru.nand.notificationservice.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -8,20 +8,16 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import ru.nand.authservice.entity.User;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Function;
 
 @Slf4j
 @Component
-public class UserJwtUtil{
+public class UserJwtUtil {
     @Value("${jwt.user.secret}")
     private String userSecretKey;
     @Value("${jwt.user.access.expiration}")
@@ -31,41 +27,6 @@ public class UserJwtUtil{
 
     private Key getUserSigningKey(){
         return Keys.hmacShaKeyFor(userSecretKey.getBytes());
-    }
-
-    /// Генерация access токена
-    public String generateAccessToken(User user){
-        Map<String, Object> claims = new HashMap<>();
-
-        claims.put("role", user.getRole().name());
-        claims.put("email", user.getEmail());
-        claims.put("token_type", "access");
-        claims.put("user_id", user.getId());
-
-        return createToken(claims, user.getUsername(), accessTokenExpiration);
-    }
-
-    /// Генерация refresh токена
-    public String generateRefreshToken(User user){
-        Map<String, Object> claims = new HashMap<>();
-
-        claims.put("role", user.getRole().name());
-        claims.put("email", user.getEmail());
-        claims.put("token_type", "refresh");
-        claims.put("user_id", user.getId());
-
-        return createToken(claims, user.getUsername(), refreshTokenExpiration);
-    }
-
-    /// Создание пользовательского токена
-    private String createToken(Map<String, Object> claims, String subject, long expirationTime) {
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(subject)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
-                .signWith(getUserSigningKey())
-                .compact();
     }
 
     /// Валидация истечения пользовательского токена
@@ -98,9 +59,8 @@ public class UserJwtUtil{
         }
     }
 
-
     /// Отсечение
-    public String resolveUserToken(HttpServletRequest request){
+    public String resolveUserTokenFromRequest(HttpServletRequest request){
         String bearer = request.getHeader("Authorization");
         if (bearer != null && bearer.startsWith("Bearer ")) {
             return bearer.substring(7);
@@ -108,6 +68,7 @@ public class UserJwtUtil{
 
         return null;
     }
+
 
     /// Получить все данные из пользовательского токена
     private Claims extractAllClaims(String token) {
@@ -137,6 +98,11 @@ public class UserJwtUtil{
         return extractClaim(token, Claims::getSubject);
     }
 
+    /// Извлечь почту
+    public String extractEmail(String token) {
+        return extractClaim(token, claims -> claims.get("email", String.class));
+    }
+
     /// Извлечь роль
     public String extractRole(String token) {
         return extractClaim(token, claims -> claims.get("role", String.class));
@@ -162,4 +128,5 @@ public class UserJwtUtil{
             throw new RuntimeException("Token hashing error: " + e.getMessage());
         }
     }
+
 }

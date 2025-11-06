@@ -55,11 +55,11 @@ public class UserServiceImpl implements UserService {
                 .role(ROLE.ROLE_USER)
                 .build();
 
-        // Сохраняем
+
         userRepository.save(user);
         log.debug("Пользователь {} успешно сохранен", user.getUsername());
 
-        // Создаем сессию и получаем пару токенов
+        // Создаем сессию и получаем DTO для отправки в сервис аккаунтов, из которого можно получить пару токенов и вернуть клиенту
         try{
             return sessionService.createSession(user);
         } catch (RuntimeException e){

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # =========================
   # PostgreSQL
@@ -146,6 +144,33 @@ services:
     depends_on:
       - loki
 
+  # =========================
+  # Cassandra
+  # =========================
+  cassandra:
+    image: cassandra:5.0
+    container_name: evalink-cassandra
+    env_file:
+      - ./notification-service/.env
+    ports:
+      - "9042:9042"
+    environment:
+      - CASSANDRA_CLUSTER_NAME=${CASSANDRA_CLUSTER_NAME}
+      - CASSANDRA_DC=${CASSANDRA_LOCAL_DATACENTER}
+      - CASSANDRA_LISTEN_ADDRESS=0.0.0.0
+      - CASSANDRA_BROADCAST_ADDRESS=cassandra
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_START_RPC=true
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+    healthcheck:
+      test: [ "CMD-SHELL", "cqlsh -e 'describe keyspaces;'" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    networks:
+      - auth-network
+
 # =========================
 # Volumes
 # =========================
@@ -155,6 +180,7 @@ volumes:
   kafka2_data:
   kafka3_data:
   redis_data:
+  cassandra_data:
   loki_data:
   grafana_data:
 
