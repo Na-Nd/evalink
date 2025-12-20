@@ -3,6 +3,7 @@ package ru.nand.authservice.service;
 import ru.nand.authservice.entity.ENUMS.STATUS;
 import ru.nand.authservice.entity.User;
 import ru.nand.authservice.entity.UserSession;
+import ru.nand.authservice.entity.dto.RegisterDTO;
 import ru.nand.authservice.entity.dto.TokenResponse;
 
 import java.util.List;

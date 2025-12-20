@@ -1,26 +1,31 @@
 package handlers
 
 import (
+	"account-service/internal/kafka"
 	"account-service/internal/middleware"
 	"account-service/internal/models/dto"
 	"account-service/internal/store"
+	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 )
 
-// AccountHandler — структура для хранения зависимости репозитория
+// AccountHandler — структура для хранения зависимости репозитория и продюсера
 type AccountHandler struct {
-	store *store.Store
+	store    *store.Store
+	producer *kafka.Producer
 }
 
-func NewAccountHandler(s *store.Store) *AccountHandler {
-	return &AccountHandler{store: s}
+func NewAccountHandler(s *store.Store, p *kafka.Producer) *AccountHandler {
+	return &AccountHandler{store: s, producer: p}
 }
 
-// CreateAccount — принимает HTTP запрос от auth-service
+// CreateAccount — принимает HTTP запрос от auth-service, после создания пользователя отправляет его другим микрам в их реплики
 func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 	var regDto dto.RegisterDto
 
@@ -38,6 +43,28 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "failed to create user: "+err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	// Если есть продюсер — формируем UserUpdateRequest и отправляем в кафку
+	if h.producer != nil {
+		update := dto.UserUpdateRequest{
+			Username:  regDto.Username,
+			Email:     regDto.Email,
+			EventType: "CREATE",
+		}
+
+		// id как ключ
+		key := strconv.FormatInt(id, 10)
+
+		go func(upd dto.UserUpdateRequest, k string) {
+			// Use Background so request cancellation does not cancel the publish attempt
+			ctx2, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			if err := h.producer.PublishJSON(ctx2, k, upd); err != nil {
+				log.Printf("failed to publish kafka message: %v", err)
+			}
+		}(update, key)
 	}
 
 	w.WriteHeader(http.StatusCreated)

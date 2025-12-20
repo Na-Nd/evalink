@@ -20,7 +20,7 @@ public class KafkaConsumerConfig {
     public ConsumerFactory<String, String> consumerFactory() {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092, localhost:9093, localhost:9094");
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "auth-group");
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "notification-group");
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.ISOLATION_LEVEL_CONFIG, "read_committed"); // Чтобы не читать незафиксированные сообщения

@@ -32,6 +32,12 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         this.sessionService = sessionService;
     }
 
+    /// Не обрабатывать публичные эндпоинты
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getRequestURI();
+        return path.equals("/api/auth/login") || path.equals("/api/auth/register") || path.equals("/api/auth/logout") || path.equals("/api/auth/verify-email");
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {

@@ -1,35 +1,23 @@
-package ru.nand.authservice.service;
+package ru.nand.notificationservice.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import ru.nand.authservice.entity.ENUMS.ROLE;
-import ru.nand.authservice.entity.User;
-import ru.nand.authservice.entity.dto.LoginDTO;
-import ru.nand.authservice.entity.dto.RegisterDTO;
-import ru.nand.authservice.entity.dto.TokenResponse;
-import ru.nand.authservice.entity.dto.UserUpdateRequest;
-import ru.nand.authservice.repository.UserRepository;
-import ru.nand.authservice.util.exception.WrongPasswordException;
+import ru.nand.notificationservice.entity.User;
+import ru.nand.notificationservice.entity.dto.UserUpdateRequest;
+import ru.nand.notificationservice.repository.UserRepository;
 
-import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Optional;
 
 @Slf4j
 @Service
-public class UserServiceImpl implements UserService {
-
+public class UserServiceImpl implements UserService{
     private final UserRepository userRepository;
-    private final SessionService sessionService;
-    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, SessionService sessionService, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.sessionService = sessionService;
-        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -48,7 +36,6 @@ public class UserServiceImpl implements UserService {
                     .id(userUpdateRequest.getId())
                     .username(userUpdateRequest.getUsername())
                     .email(userUpdateRequest.getEmail())
-                    .password(userUpdateRequest.getPassword())
                     .build();
 
             userRepository.save(user);
@@ -62,35 +49,8 @@ public class UserServiceImpl implements UserService {
             // Смысла проверять каждое поле нет, проще перезаписать
             user.setUsername(userUpdateRequest.getUsername());
             user.setEmail(userUpdateRequest.getEmail());
-            user.setPassword(userUpdateRequest.getPassword());
             userRepository.save(user);
             log.debug("Пользователь {} изменён", user.getUsername());
         }
-
-    }
-
-    @Override
-    public TokenResponse login(LoginDTO loginDTO) throws WrongPasswordException {
-
-        // Ищем такого пользователя
-        User user = userRepository.findByUsername(loginDTO.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        // Сверяем хэши
-        if (!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())){
-            throw new WrongPasswordException(null);
-        }
-
-        return sessionService.createSession(user);
-    }
-
-    @Override
-    public void logout(String authHeader) throws RuntimeException {
-        sessionService.deactivateSessionByAccessToken(authHeader);
-    }
-
-    @Override
-    public TokenResponse refreshAccessToken(String refreshToken) {
-        return sessionService.refreshAccessToken(refreshToken);
     }
 }

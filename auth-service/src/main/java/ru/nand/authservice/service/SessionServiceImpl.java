@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import ru.nand.authservice.entity.ENUMS.STATUS;
 import ru.nand.authservice.entity.User;
 import ru.nand.authservice.entity.UserSession;
+import ru.nand.authservice.entity.dto.RegisterDTO;
 import ru.nand.authservice.entity.dto.TokenResponse;
 import ru.nand.authservice.repository.UserSessionRepository;
 import ru.nand.authservice.util.NotificationUtil;

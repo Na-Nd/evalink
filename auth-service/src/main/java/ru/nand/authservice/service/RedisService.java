@@ -1,44 +1,59 @@
 package ru.nand.authservice.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import ru.nand.authservice.entity.dto.RegisterDTO;
 
 import java.util.concurrent.TimeUnit;
 
-@Slf4j
 @Service
-public class RedisService implements CacheService {
-    private final RedisTemplate<String, RegisterDTO> redisTemplate;
+@Slf4j
+public class RedisService {
+
+    private final RedisTemplate<String, RegisterDTO> registerRedisTemplate;
+    private final StringRedisTemplate stringRedisTemplate;
 
     @Autowired
-    public RedisService(RedisTemplate<String, RegisterDTO> redisTemplate) {
-        this.redisTemplate = redisTemplate;
+    public RedisService(@Qualifier("registerRedisTemplate") RedisTemplate<String, RegisterDTO> registerRedisTemplate,
+                        StringRedisTemplate stringRedisTemplate) {
+        this.registerRedisTemplate = registerRedisTemplate;
+        this.stringRedisTemplate = stringRedisTemplate;
     }
 
-    /// Сохранение значения с TTL
-    @Override
-    public void save(String key, Object value, long timeout, TimeUnit unit) {
-        log.info("Сохранение в Redis кэш");
-        redisTemplate.opsForValue().set(key, (RegisterDTO) value, timeout, unit);
-        log.debug("Сохранено значение в Redis: Ключ: {}, Значение: {}, TTL: {} {}", key, value, timeout, unit);
+    public void saveVerificationCode(String key, String code, long timeout, TimeUnit unit) {
+        log.info("Save code key={} code={}", key, code);
+        stringRedisTemplate.opsForValue().set(key, code, timeout, unit);
     }
 
-    /// Получение значения по ключу
-    public Object get(String key) {
-        log.info("Получение значения из Redis кэша по ключу");
-        Object object = redisTemplate.opsForValue().get(key);
-        log.debug("Получено значение из Redis: Ключ: {}, Значение: {}", key, object);
-        return object;
+    public String getVerificationCode(String key) {
+        return stringRedisTemplate.opsForValue().get(key);
     }
 
-    /// Удаление значения по ключу
-    @Override
+    public void savePendingRegistration(String key, RegisterDTO dto, long timeout, TimeUnit unit) {
+        log.info("Save pending registration key={} dto={}", key, dto);
+        registerRedisTemplate.opsForValue().set(key, dto, timeout, unit);
+    }
+
+    public RegisterDTO getPendingRegistration(String key) {
+        return registerRedisTemplate.opsForValue().get(key);
+    }
+
+    public void deleteKey(String key) {
+        // удаляем в обоих шаблонах (безопасно)
+        registerRedisTemplate.delete(key);
+        stringRedisTemplate.delete(key);
+    }
+
     public void delete(String key) {
-        log.info("Удаление значения из redis по ключу");
-        redisTemplate.delete(key);
-        log.debug("Удалено значение из Redis. Ключ: {}", key);
+        log.info("Удаление ключа из Redis: {}", key);
+        registerRedisTemplate.delete(key);
+        stringRedisTemplate.delete(key);
     }
+
 }
+

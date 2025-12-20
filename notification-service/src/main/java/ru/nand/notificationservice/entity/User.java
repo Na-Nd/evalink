@@ -1,9 +1,8 @@
 package ru.nand.notificationservice.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import lombok.*;
-
-import java.util.List;
 
 @Entity
 @Getter
@@ -16,17 +15,14 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
     private Long id;
 
     @Column(unique = true, name = "username")
     private String username;
 
+    @Email
     @Column(unique = true, name = "email")
     private String email;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true) // Каскадное применение операций над пользователем к сессиям и удаление сессий при их удалении из списка
-    private List<UserSession> sessions;
 
     public User(String username) {
         this.username = username;
