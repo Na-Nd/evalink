@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   # =========================
   # PostgreSQL
@@ -14,18 +16,17 @@ services:
       - "5438:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
-      - ./init:/docker-entrypoint-initdb.d # Монтируем директорию со скриптом инициализации
+      - ./init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d evalink_db" ]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d evalink_db"]
       interval: 5s
       timeout: 5s
       retries: 5
     networks:
       - auth-network
 
-
   # =========================
-  # Kafka кластер (KRaft)
+  # Kafka cluster (KRaft)
   # =========================
   evalink-kafka-1:
     image: apache/kafka:3.7.0
@@ -77,8 +78,8 @@ services:
       KAFKA_PROCESS_ROLES: controller,broker
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@evalink-kafka-1:9091,2@evalink-kafka-2:9091,3@evalink-kafka-3:9091
       KAFKA_LISTENERS: PLAINTEXT://:9090,CONTROLLER://:9091,EXTERNAL://:9096
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://evalink-kafka-3:9090,EXTERNAL://${HOSTNAME:-localhost}:9096
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_CLUSTER_ID: PVjHlx7ESeesq55jeB6Efw
@@ -101,6 +102,26 @@ services:
       - auth-network
 
   # =========================
+  # MinIO (S3-compatible storage)
+  # =========================
+  minio:
+    image: minio/minio:latest
+    container_name: evalink-minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"   # API
+      - "9001:9001"   # Web Console
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+      - minio_config:/root/.minio
+    command: server /data --console-address ":9001"
+    networks:
+      - auth-network
+
+  # =========================
   # Loki
   # =========================
   loki:
@@ -109,10 +130,10 @@ services:
     ports:
       - "3100:3100"
     command: -config.file=/etc/loki/local-config.yaml
-    networks:
-      - auth-network
     volumes:
       - loki_data:/loki
+    networks:
+      - auth-network
 
   # =========================
   # Promtail
@@ -126,10 +147,10 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - ./promtail-config.yml:/etc/promtail/config.yml
     command: -config.file=/etc/promtail/config.yml
-    networks:
-      - auth-network
     depends_on:
       - loki
+    networks:
+      - auth-network
 
   # =========================
   # Grafana
@@ -139,12 +160,12 @@ services:
     container_name: evalink-grafana
     ports:
       - "3000:3000"
-    networks:
-      - auth-network
     volumes:
       - grafana_data:/var/lib/grafana
     depends_on:
       - loki
+    networks:
+      - auth-network
 
   # =========================
   # Cassandra
@@ -157,23 +178,22 @@ services:
     ports:
       - "9042:9042"
     environment:
-      - CASSANDRA_CLUSTER_NAME=${CASSANDRA_CLUSTER_NAME}
-      - CASSANDRA_DC=${CASSANDRA_LOCAL_DATACENTER}
-      - CASSANDRA_BROADCAST_ADDRESS=cassandra
-      - CASSANDRA_SEEDS=cassandra
-      - CASSANDRA_START_RPC=true
-      - MAX_HEAP_SIZE=512M
-      - HEAP_NEWSIZE=128M
+      CASSANDRA_CLUSTER_NAME: ${CASSANDRA_CLUSTER_NAME}
+      CASSANDRA_DC: ${CASSANDRA_LOCAL_DATACENTER}
+      CASSANDRA_BROADCAST_ADDRESS: cassandra
+      CASSANDRA_SEEDS: cassandra
+      CASSANDRA_START_RPC: "true"
+      MAX_HEAP_SIZE: 512M
+      HEAP_NEWSIZE: 128M
     volumes:
       - cassandra_data:/var/lib/cassandra
     healthcheck:
-      test: [ "CMD-SHELL", "cqlsh -e 'describe keyspaces;'" ]
+      test: ["CMD-SHELL", "cqlsh -e 'describe keyspaces;'"]
       interval: 10s
       timeout: 10s
       retries: 10
     networks:
       - auth-network
-
 
 # =========================
 # Volumes
@@ -187,6 +207,8 @@ volumes:
   cassandra_data:
   loki_data:
   grafana_data:
+  minio_data:
+  minio_config:
 
 # =========================
 # Networks

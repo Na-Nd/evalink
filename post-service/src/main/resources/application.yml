@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: post-service
+#  datasource:
+#    url: ${POSTGRES_URL}
+#    username: ${POSTGRES_USER}
+#    password: ${POSTGRES_PASSWORD}
+#    driver-class-name: org.postgresql.Driver
+  r2dbc:
+    url: ${R2DBC_URL}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+  flyway:
+    enabled: true
+server:
+  port: 8083
+minio:
+  url: ${MINIO_URL}
+  accessKey: ${MINIO_ACCESS_KEY}
+  secretKey: ${MINIO_SECRET_KEY}
+  bucket: ${MINIO_BUCKET}
+jwt:
+  user:
+    secret: ${USER_JWT_SECRET}
+    access:
+      expiration: ${USER_ACCESS_JWT_EXPIRATION}
+    refresh:
+      expiration: ${USER_REFRESH_JWT_EXPIRATION}
